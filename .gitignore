@@ -17,14 +17,17 @@ frontend/.env.*
 !frontend/.env.template
 
 # Application data
-rihPodcast/
-whisper.cpp/
+*/transcripts/
 */audio/
 */wav/
 */csv/
 */chroma.db/
+*/indexdir/
 *.mp3
 *.wav
+*.srt
+*.vtt
+*.json
 *.tar
 *.tar.gz
 

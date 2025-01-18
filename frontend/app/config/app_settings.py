@@ -4,7 +4,7 @@
 SHOW_PROGRESS = False  # Set to True to enable detailed progress updates
 
 # Podcast Configuration
-POD_PREFIX = "rihPodcast"
+POD_PREFIX = "your_podcast_name"  # Should match config.py pod_prefix
 MAX_TOKENS = 240  # Token limit for text chunks
 
 # Directory Configuration
@@ -22,16 +22,16 @@ COLLECTION_METADATA = {
 }
 
 # Transcript Server Configuration
-TRANSCRIPT_SERVER_ENABLED = True  # Set to True to use server, False for local transcription
-TRANSCRIPT_MODEL = "medium"
-TRANSCRIPT_LANGUAGE = "en"
-TRANSCRIPT_OUTPUT_FORMAT = "srt"
-TRANSCRIPT_TRANSLATE = False 
+TRANSCRIPT_SERVER_ENABLED = False  # Set to True to use server, False for local transcription
+TRANSCRIPT_MODEL = "medium"  # Whisper model size: tiny, base, small, medium, large
+TRANSCRIPT_LANGUAGE = "en"  # Language code for transcription
+TRANSCRIPT_OUTPUT_FORMAT = "srt"  # Output format for transcripts
+TRANSCRIPT_TRANSLATE = False  # Whether to translate non-English content
 
 # LLM Configuration
-LLM_PROVIDER = 'SambaNova'  # Provider name for display
+LLM_PROVIDER = 'OpenAI'  # Provider name for display
 LLM_API_KEY = None  # Set via environment variable
-LLM_API_BASE = 'https://api.sambanova.ai/v1'  # Base URL for API
+LLM_API_BASE = 'https://api.openai.com/v1'  # Base URL for API
 LLM_MODEL = None  # Set via environment variable
 LLM_TEMPERATURE = 0.1  # Default temperature for completions
 LLM_TOP_P = 0.1  # Default top_p for completions
