@@ -1,0 +1,95 @@
+# docker_compose.yaml
+# This is used to run the Elasticsearch container
+# It is used to index the podcast transcripts and search for them
+
+services:
+  rih-elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
+    container_name: rih-elastic
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - xpack.security.authc.api_key.enabled=true
+      - ELASTIC_PASSWORD=${ELASTICSEARCH_PASSWORD}
+    ports:
+      - "127.0.0.1:9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    networks:
+      - app-network
+
+  rih-postgres:
+    image: postgres:15
+    container_name: rih-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  rih-chromadb:
+    image: chromadb/chroma:latest
+    container_name: rih-chromadb
+    environment:
+      - DATA_DIR=/chroma  # Optional: Directory for persistent data
+    volumes:
+      - chroma-data:/chroma
+    ports:
+      - "127.0.0.1:8000:8000"  # ChromaDB default API port
+    networks:
+      - app-network
+
+  rih-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile_frontend
+    env_file:
+      - .env
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=production
+      - ELASTICSEARCH_URL=http://rih-elastic:9200
+      - ELASTICSEARCH_USER=elastic
+      - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD}
+      - CHROMADB_HOST=rih-chromadb
+      - CHROMADB_PORT=8000
+      - SAMBANOVA_API_KEY=${SAMBANOVA_API_KEY}
+      - SEMANTIC_SEARCH_MODEL=${SEMANTIC_SEARCH_MODEL}
+    volumes:
+      - app_data:/app
+      - app_logs:/app/logs
+    ports:
+      - "127.0.0.1:8008:8008"
+    networks:
+      - app-network
+    depends_on:
+      - rih-elastic
+      - rih-chromadb
+    deploy:
+      restart_policy:
+        condition: any
+      update_config:
+        parallelism: 1
+        delay: 10s
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2048M
+        reservations:
+          cpus: '0.5'
+          memory: 1024M
+
+volumes:
+  esdata:
+  pgdata:
+  chroma-data:
+  app_logs:
+  app_data:
+
+networks:
+  app-network:

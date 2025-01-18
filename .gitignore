@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+*venv/
+ENV/
+
+# Environment files
+.env
+.env.*
+!.env.template
+frontend/.env
+frontend/.env.*
+!frontend/.env.template
+
+# Application data
+rihPodcast/
+whisper.cpp/
+*/audio/
+*/wav/
+*/csv/
+*/chroma.db/
+*.mp3
+*.wav
+*.tar
+*.tar.gz
+
+# Logs and databases
+*.log
+logs/
+*.sqlite
+*.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Docker volumes and data
+esdata/
+pgdata/
+chroma-data/
+app-data/
+app-logs/
+*.volume
+
+# Secrets and keys
+*.pem
+*.key
+*.crt
+*.cert
+*.p12
+*.pfx
+*.password
+*_key
+*_secret
+

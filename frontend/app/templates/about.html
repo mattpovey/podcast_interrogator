@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}About{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="{{ url_for('home') }}" class="btn btn-outline-secondary mb-3">← Back to Home</a>
+            <h1>About the Rest Is History Interrogator</h1>
+
+            <div class="d-flex align-items-center">
+                Built by Matthew Povey and various AIs:
+                <a href="https://github.com/mattpovey" class="social-icon ms-2" title="GitHub">
+                    <i class="fab fa-github"></i>
+                </a>
+                <a href="https://www.linkedin.com/in/mattjp/" class="social-icon ms-2" title="LinkedIn">
+                    <i class="fab fa-linkedin"></i>
+                </a>
+                <a href="https://x.com/mattpovey" class="social-icon ms-2" title="X">
+                    <i class="fab fa-twitter"></i>
+                </a>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title mb-4">About This Project</h3>
+                    <p><H5>Update: Matthew Povey,12th January 2025.</H5>
+                    </p><p>
+                        I built the original <a href="https://podsearch.kyomu.org">Rest Is History Interrogator</a> in 2023, 
+                        it was partly an experiment to see how effective code generation could be in building hobby projects. It proved 
+                        very effective but the original version ended up being a bit of a mess and hard to maintain. I built simple AI functionality into that
+                        version but didn't release it because the API costs at the time were too high to justify. Since then, the cost of AI inference has fallen 
+                        dramatically to the point where it's reasonable to make the functionality available. It's still a fairly naive RAG implementation but works well enough. 
+                    </p><p>         
+                        This version is a mostly complete rewrite of the original and a demonstration of how much easier it is to build applications with the tools
+                        that are now available. Code generation is now sufficiently effective that large parts of application functionality can be built 
+                        without writing any code at all. Indeed, there are parts of the application code that I've barely even looked at. 
+                    </p>
+                    <p>
+                        We are very nearly at the point where any individual can build tools which make their lives or jobs easier which is a very exciting prospect.
+                    </p> 
+                    <p><H5> Major Changes - 12th January 2025</H5></p>
+                    <ul>
+                        <li>Improved the semantic search by moving from a flat file vector store to ChromaDB</li>
+                        <li>Finally added the ability to ask questions with AI. I use <a href="{{ provider_url }}">{{ provider_name }}</a> to get high speed inference</li>
+                        <li>Re-ran transcriptions using a newer version of OpenAI Whisper (much faster as I now have better hardware)</li>
+                        <li>Moved from whoosh to ElasticSearch for the free text search</li>
+                        <li>Added a simple chat interface</li>
+                    </ul>
+                    <p><h5>Still to come (maybe, when I have time)</h5></p>
+                    <ul>
+                        <li>Re-process the transcripts to clean up proper nouns that Whisper gets wrong</li>
+                        <li>Diarized transcripts to properly distinguish between Dom, Tom and guests</li>
+                        <li>A more comprehensive database of episodes and a way to search it</li>
+                    </ul>
+                     
+                    <p><h3>About page from the March 2023 version:</h3>
+                    </p>
+                    <p>    
+                        I'm <a href="https://www.linkedin.com/in/mattjp/">Matthew</a>. Like many others, podcasts have mostly replaced the radio as the primary 
+                        way I listen to audio for entertainment, professional information and news.There are a few podcasts, including The Rest is History for 
+                        which I have listened to many if not all episodes.
+                    </p>
+                    <p>
+                        Some, like <a href="https://www.econtalk.org/">EconTalk</a> have transcripts available to read and search, 
+                        but most do not. This makes discovering whether someone said what you think they did or told a story the way you remember it difficult. 
+                        Building a searchable database of transcripts of any podcast I might fancy has long been a back-burner project which, like 
+                        most of my back-burner projects I didn't have any real expectation of doing. It's not that I couldn't do it, but that the knowledge
+                        I would need to acquire to do it wasn't all that useful to me outside of the specific project and so the investment of time was difficult to justify.</p>
+                        <p>That changed when large language models (LLMs) started to become effective ways to help build - or just build - code. The project became 
+                            more managable still when OpenAI released their <a href="https://openai.com/research/whisper">Whisper</a> project which offered the ability
+                            to do high-quality transcriptions of any audio in many languages on consumer grade computer hardware. Then <a href="https://twitter.com/ggerganov">Georgi Gerganov</a> worked minor 
+                            miracles to port that to C++ dramatically increasing the performance and hence reducing the compute and time required to transcribe. His 
+                            <a href="https://github.com/ggerganov/whisper.cpp">whisper.cpp</a> project meant I could get 400 episodes of The Rest is History transcribed
+                            using 3 computers (an old i7 server, an i5 Mac Mini and a M1 Macbook Air) in my house over about 72 hours. As this was winter, I even got to 
+                            keep my office warm by doing it...
+                            </p>
+                        <p>The combination of Whisper.cpp, GitHub CoPilot and the original ChatGPT got the first version of the application built much faster that I 
+                            could have done it myself and without having to spend money on transcription services from Google GCP or Amazon AWS. With the launch of GPT4
+                            it's even easier to get write code that works well enough to be useful. Anyone with experience building web-based applications professionally
+                            will notice all the signs that I don't do that in the quality of the HTML. </p>
+                        <p>I've now added some further functionality to complement the simple search functionality. I've used the OpenAI embeddings service to create a better
+                            (or different at any rate) version of the search which allows for more free-form (semantic in the industry jargon) searches. The original would find
+                            nothing for a search of <b>"the wrong shoes affecting global politics"</b> or <b>"Cromwell's behaviour in Ireland"</b> but the new version does. 
+                            While this is an improvement, it's really just the groundwork to allow a LLM to search the podcast and answer questions about it. That already works
+                            rather well but I need to figure out how to avoid it costing me a fortune.</p> 
+                            <p>This whole thing has been a bit of fun and an experiment is learning how much a below average developer can get done using the tools that are now
+                            available to us. I hope you find it useful.</p>
+                    <p>
+
+                    </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

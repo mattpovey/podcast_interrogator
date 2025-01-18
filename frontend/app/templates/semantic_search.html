@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Semantic Search{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="{{ url_for('home') }}" class="btn btn-outline-secondary mb-3">← Back to Search Options</a>
+            <h1>Semantic Search</h1>
+            <p class="lead">Search using meaning and context rather than exact words</p>
+            <div class="d-flex align-items-center">
+                Built by Matthew Povey and various AIs:
+                <a href="https://github.com/mattpovey" class="social-icon ms-2" title="GitHub">
+                    <i class="fab fa-github"></i>
+                </a>
+                <a href="https://www.linkedin.com/in/mattjp/" class="social-icon ms-2" title="LinkedIn">
+                    <i class="fab fa-linkedin"></i>
+                </a>
+                <a href="https://x.com/mattpovey" class="social-icon ms-2" title="X">
+                    <i class="fab fa-twitter"></i>
+                </a>
+        </div>
+        <br>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-body">
+                    <form id="semantic-search-form">
+                        <div class="mb-3">
+                            <label for="semantic-query" class="form-label">Search Query</label>
+                            <input type="text" class="form-control" id="semantic-query" placeholder="Enter your search query">
+                        </div>
+                        <div class="suggestion-boxes mb-4">
+                            <div class="row">
+                                {% for example in examples %}
+                                <div class="col-md-4">
+                                    <div class="suggestion-box" data-prompt="{{ example }}">
+                                        {{ example }}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="semantic-num-results" class="form-label">Number of Results</label>
+                            <input type="number" class="form-control" id="semantic-num-results" value="5" min="1" max="20">
+                        </div>
+                        <div class="mb-3">
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">Search Tips:</h6>
+                                <ul class="mb-0">
+                                    <li>Use natural language</li>
+                                    <li>Focus on concepts rather than specific words or questions</li>
+                                    <li>Search will find results that are similar in meaningto the query</li>
+                                    <li>Adjust the number of results to see more or fewer matches</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="button-container">
+                            <button type="submit" class="btn btn-primary">Search</button>
+                            <i class="fas fa-spinner fa-spin d-none"></i>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div id="semantic-results" class="mt-4"></div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="display-4">The Rest Is History Podcast Search</h1>
+            <p class="lead">Choose your preferred way to search through podcast episodes</p>
+            <div class="d-flex justify-content-center align-items-center">
+                Built by Matthew Povey and various AIs:
+                <a href="https://github.com/mattpovey" class="social-icon ms-2" title="GitHub">
+                    <i class="fab fa-github"></i>
+                </a>
+                <a href="https://www.linkedin.com/in/mattjp/" class="social-icon ms-2" title="LinkedIn">
+                    <i class="fab fa-linkedin"></i>
+                </a>
+                <a href="https://x.com/mattpovey" class="social-icon ms-2" title="X">
+                    <i class="fab fa-twitter"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Full-Text Search Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h2>Full-Text Search</h2>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Traditional Keyword Search</h5>
+                    <p class="card-text">
+                        Best for:
+                        <ul>
+                            <li>Finding out just how sacral the podcast is</li>
+                            <li>Finding the right episode to listen to</li>
+                            <li>Jumping straight to the audio you've found</li>
+                        </ul>
+                        Features:
+                        <ul>
+                            <li>Exact phrase matching</li>
+                            <li>Gives a count of how often a word or phrase appears</li>
+                            <li>Fast and precise results</li>
+                        </ul>
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('fulltext_search_page') }}" class="btn btn-primary">Try Full-Text Search</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI-Powered Search Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h2>AI-Powered Search</h2>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">AI Question Answering</h5>
+                    <p class="card-text">
+                        Best for:
+                        <ul>
+                            <li>Detailed answers to questions</li>
+                            <li>Understanding complex topics</li>
+                            <li>Synthesizing information across episodes</li>
+                        </ul>
+                        Features:
+                        <ul>
+                            <li>Natural language questions</li>
+                            <li>AI-generated comprehensive answers</li>
+                            <li>Source citations and explanations</li>
+                        </ul>
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('rag_search_page') }}" class="btn btn-success">Try AI-Powered Search</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Semantic Search Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h2>Semantic Search</h2>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Meaning-Based Search</h5>
+                    <p class="card-text">
+                        Best for:
+                        <ul>
+                            <li>Find content by meaning, not just words</li>
+                            <li>Explore related concepts</li>
+                            <li>Natural language queries</li>
+                        </ul>
+                        Features:
+                        <ul>
+                            <li>Understands context and meaning</li>
+                            <li>Relevance scoring</li>
+                        </ul>
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('semantic_search_page') }}" class="btn btn-info">Try Semantic Search</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <p class="text-center">
+                AI Search uses <a href="{{ provider_url }}">{{ provider_name }}</a>.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %} 

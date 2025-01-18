@@ -1,0 +1,7 @@
+flask
+elasticsearch
+numpy
+chromadb
+openai
+python-dotenv
+gunicorn

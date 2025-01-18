@@ -1,0 +1,15 @@
+pandas
+numpy
+pysrt
+scikit.learn
+scipy
+srt
+ipython
+feedparser
+elasticsearch
+psycopg2-binary
+tabulate
+chromadb
+requests
+
+

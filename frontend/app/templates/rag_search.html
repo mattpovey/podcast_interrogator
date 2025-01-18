@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}AI-Powered Search{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="{{ url_for('home') }}" class="btn btn-outline-secondary mb-3">← Back to Search Options</a>
+            <h1>AI-Powered Search</h1>
+            <p class="lead">Ask questions and get detailed answers from the podcast content</p>
+            <div class="d-flex align-items-center">
+                Built by Matthew Povey and various AIs:
+                <a href="https://github.com/mattpovey" class="social-icon ms-2" title="GitHub">
+                    <i class="fab fa-github"></i>
+                </a>
+                <a href="https://www.linkedin.com/in/mattjp/" class="social-icon ms-2" title="LinkedIn">
+                    <i class="fab fa-linkedin"></i>
+                </a>
+                <a href="https://x.com/mattpovey" class="social-icon ms-2" title="X">
+                    <i class="fab fa-twitter"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-body">
+                    <form id="rag-search-form">
+                        <div class="mb-3">
+                            <label for="rag-query" class="form-label">Your Question</label>
+                            <input type="text" class="form-control" id="rag-query" placeholder="Ask a question about the podcasts">
+                        </div>
+                        <div class="suggestion-boxes mb-4">
+                            <div class="row">
+                                {% for example in examples %}
+                                <div class="col-md-4">
+                                    <div class="suggestion-box" data-prompt="{{ example }}">
+                                        {{ example }}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="button-container">
+                            <button type="submit" class="btn btn-success">Ask Question</button>
+                            <i class="fas fa-spinner fa-spin d-none"></i>
+                        </div>
+                    </form>
+                    <br>
+                    <div class="mb-3">
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading">Search Tips:</h6>
+                            <ul class="mb-0">
+                                <li>Ask specific questions</li>
+                                <li>Use natural language</li>
+                                <li>Be clear and concise in your questions</li>
+                                <li>The AI will provide answers based on podcast content with sources provided below</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="rag-results" class="mt-4"></div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

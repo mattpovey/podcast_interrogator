@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Full-Text Search{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="{{ url_for('home') }}" class="btn btn-outline-secondary mb-3">← Back to Home</a>
+            <h1>Full-Text Search</h1>
+            <p class="lead">Search through podcast transcripts</p>
+            <div class="d-flex align-items-center">
+                Built by Matthew Povey and various AIs:
+                <a href="https://github.com/mattpovey" class="social-icon ms-2" title="GitHub">
+                    <i class="fab fa-github"></i>
+                </a>
+                <a href="https://www.linkedin.com/in/mattjp/" class="social-icon ms-2" title="LinkedIn">
+                    <i class="fab fa-linkedin"></i>
+                </a>
+                <a href="https://x.com/mattpovey" class="social-icon ms-2" title="X">
+                    <i class="fab fa-twitter"></i>
+                </a>
+        </div>
+        <br>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-body">
+                    <form id="elastic-search-form">
+                        <div class="mb-3">
+                            <label for="elastic-query" class="form-label">Search Query</label>
+                            <input type="text" class="form-control" id="elastic-query" placeholder="Enter your search terms">
+                        </div>
+                        <div class="suggestion-boxes mb-4">
+                            <div class="row">
+                                {% for example in examples %}
+                                <div class="col-md-4">
+                                    <div class="suggestion-box" data-prompt="{{ example }}">
+                                        {{ example }}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">Search Tips:</h6>
+                                <ul class="mb-0">
+                                    <li>Searches will match words in any order</li>
+                                    <li>Results are sorted by relevance</li>
+                                    <li>Use multiple words to narrow down results</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="button-container">
+                            <button type="submit" class="btn btn-primary">Search</button>
+                            <i class="fas fa-spinner fa-spin d-none"></i>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div id="elastic-results" class="mt-4">
+                <!-- Results will be displayed here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
