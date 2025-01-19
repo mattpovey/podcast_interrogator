@@ -33,11 +33,11 @@ def get_db_connection():
     load_dotenv('.env')
     try:
         connection = psycopg2.connect(
-            database="rihpodcast",
-            user="podsearcher",
-            password=os.environ.get('POSTGRES_PASSWORD'),
-            host="localhost",
-            port="5432"
+            database=os.getenv('POSTGRES_DB', 'podcast-search'),
+            user=os.getenv('POSTGRES_USER', 'podsearcher'),
+            password=os.getenv('POSTGRES_PASSWORD'),
+            host=os.getenv('POSTGRES_HOST', 'localhost'),
+            port=os.getenv('POSTGRES_PORT', '5432')
         )
         return connection
     except Error as e:
