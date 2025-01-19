@@ -380,6 +380,57 @@ def transcribe_episodes(wav_dir, tscript_dir, out_format, file_list, audio_dir):
         print("Using local transcription")
         # ... existing local transcription code ...
 
+def create_recommendations_prompt(user_interest, db_episodes, semantic_segments):
+    """
+    Combine metadata from database episodes and semantic search snippets
+    into a prompt that requests five recommended episodes from the LLM.
+    """
+    # Convert db_episodes to text
+    db_episode_texts = []
+    for ep in db_episodes:
+        db_episode_texts.append(
+            f"Title: {ep['title']}\nDate: {ep['date']}\nDescription: {ep['description']}\nURL: {ep['url']}\n"
+        )
+
+    # Convert semantic_segments to text (if available)
+    semantic_texts = []
+    if semantic_segments and 'documents' in semantic_segments and semantic_segments['documents'][0]:
+        for i, doc in enumerate(semantic_segments['documents'][0]):
+            meta = semantic_segments['metadatas'][0][i]
+            semantic_texts.append(
+                f"Snippet {i+1} from episode {meta['title']}:\n{doc}\n"
+            )
+
+    # Build final prompt
+    prompt = f"""
+You are an expert podcast guide. A user is interested in listening to episodes about: {user_interest}.
+
+Below are possible matches from the database:
+{''.join(db_episode_texts)}
+
+Below are transcript snippets from semantic search:
+{''.join(semantic_texts)}
+
+Based on the above information, recommend FIVE episodes the user should listen to. 
+For each recommended episode, provide:
+1. Title
+2. Short reason or explanation why it's recommended
+3. The URL or reference
+
+Return your response in JSON with the structure:
+{{
+  "recommendations": [
+    {{
+      "title": "...",
+      "reason": "...",
+      "url": "..."
+    }},
+    ...
+  ]
+}}
+"""
+    return prompt
+
 def main():
     print("This is a library of functions supporting turning transcripts into embeddings and storing them to a ChromaDB collection.")
     

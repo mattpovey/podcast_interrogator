@@ -740,5 +740,9 @@ def rag_search():
 
     return Response(stream_with_context(generate()), mimetype='text/event-stream')
 
+@app.route('/recommendations', methods=['GET'])
+def recommendations_page():
+    return render_template('recommend.html')
+
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5000) 

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Recommendations{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="{{ url_for('home') }}" class="btn btn-outline-secondary mb-3">← Back to Search Options</a>
+            <h1>Episode Recommendations</h1>
+            <p class="lead">Enter your interests, and we'll recommend episodes.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-body">
+                    <form id="recommend-form">
+                        <div class="mb-3">
+                            <label for="recommend-interest" class="form-label">Your Interests</label>
+                            <input type="text" class="form-control" id="recommend-interest" placeholder="e.g. Napoleon, ancient Rome, World War II...">
+                        </div>
+                        <div class="button-container">
+                            <button type="submit" class="btn btn-warning">Get Recommendations</button>
+                            <i class="fas fa-spinner fa-spin d-none"></i>
+                        </div>
+                    </form>
+                    <br>
+                    <div id="recommend-results"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

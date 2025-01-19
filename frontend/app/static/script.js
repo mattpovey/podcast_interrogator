@@ -661,4 +661,58 @@ document.addEventListener('DOMContentLoaded', function() {
 
         ragResults.innerHTML = resultsHtml;
     }
+
+    const recommendForm = document.getElementById('recommend-form');
+    if (recommendForm) {
+        recommendForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const spinner = recommendForm.querySelector('.fa-spinner');
+            spinner.classList.remove('d-none');
+
+            const userInterest = document.getElementById('recommend-interest').value;
+            const formData = new FormData();
+            formData.append('interest', userInterest);
+
+            try {
+                const response = await fetch('/api/search/recommend', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                spinner.classList.add('d-none');
+
+                const resultsDiv = document.getElementById('recommend-results');
+
+                if (data.error) {
+                    resultsDiv.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+                    return;
+                }
+
+                // Expect JSON with { "recommendations": [...] }
+                if (!data.recommendations) {
+                    resultsDiv.innerHTML = `<div class="alert alert-info">No recommendations found.</div>`;
+                    return;
+                }
+
+                let html = '';
+                data.recommendations.forEach((rec, index) => {
+                    html += `
+                        <div class="mb-3">
+                            <strong>Recommendation ${index + 1}:</strong><br>
+                            <strong>Title:</strong> ${rec.title}<br>
+                            <strong>Reason:</strong> ${rec.reason}<br>
+                            <strong>URL:</strong> <a href="${rec.url}" target="_blank">${rec.url}</a>
+                        </div>
+                    `;
+                });
+                resultsDiv.innerHTML = html;
+
+            } catch (err) {
+                spinner.classList.add('d-none');
+                console.error(err);
+                document.getElementById('recommend-results').innerHTML =
+                    `<div class="alert alert-danger">There was an error fetching recommendations.</div>`;
+            }
+        });
+    }
 }); 
