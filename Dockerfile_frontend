@@ -1,0 +1,52 @@
+# Build stage
+FROM python:3.9-slim AS builder
+
+# Set working directory
+WORKDIR /app
+
+# Install build dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc python3-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Production stage
+FROM python:3.9-slim
+
+# Set working directory
+WORKDIR /app
+
+# Create non-root user and necessary directories
+RUN useradd -m -r appuser && \
+    chown appuser:appuser /app && \
+    mkdir -p /app/logs && \
+    chown -R appuser:appuser /app/logs
+
+# Copy Python dependencies from builder
+COPY --from=builder /usr/local/lib/python3.9/site-packages/ /usr/local/lib/python3.9/site-packages/
+COPY --from=builder /usr/local/bin/gunicorn /usr/local/bin/
+
+# Copy application code (excluding .env file to use docker-compose environment variables)
+COPY app/app.py .
+COPY app/config ./config/
+COPY app/templates ./templates/
+COPY app/static ./static/
+
+# Set environment variables
+ENV FLASK_APP=app.py
+ENV FLASK_ENV=production
+ENV PYTHONUNBUFFERED=1
+ENV HOST=0.0.0.0
+ENV PATH="/usr/local/bin:${PATH}"
+
+# Switch to non-root user
+USER appuser
+
+# Expose port
+EXPOSE 8008
+
+# Use gunicorn for production
+CMD ["gunicorn", "--bind", "0.0.0.0:8008", "--workers", "3", "--threads", "4", "--timeout", "120", "app:app"] 
