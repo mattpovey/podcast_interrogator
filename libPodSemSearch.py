@@ -238,9 +238,41 @@ def consolidate_feeds(feed_urls):
     logger.info(f"Total unique episodes found across all feeds: {len(all_episodes)}")
     return all_episodes
 
+def verify_audio_file(audio_path, expected_url):
+    """Verify that an audio file exists and is complete by checking its size against the server."""
+    if not os.path.exists(audio_path):
+        return False
+        
+    try:
+        # Get the size of the local file
+        local_size = os.path.getsize(audio_path)
+        
+        # Get the size from the server without downloading
+        response = requests.head(expected_url)
+        if response.status_code != 200:
+            logger.warning(f"Could not verify size for {audio_path}: server returned {response.status_code}")
+            return False
+            
+        server_size = int(response.headers.get('content-length', 0))
+        
+        # If server doesn't provide size or local file is smaller, mark for re-download
+        if server_size == 0:
+            logger.warning(f"Could not verify size for {audio_path}: server did not provide content length")
+            return True  # Assume file is okay if we can't verify
+        elif local_size < server_size:
+            logger.warning(f"Incomplete download detected for {audio_path}: {local_size} bytes vs {server_size} bytes")
+            return False
+            
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error verifying {audio_path}: {str(e)}")
+        return False
+
 def fetch_episodes(episode_dict, audio_dir, tscript_dir):
     """Fetch episodes that don't have transcripts yet."""
     episodes_to_download = []
+    incomplete_downloads = []
 
     for episode in episode_dict:
         title = episode_dict[episode]['title']
@@ -255,23 +287,39 @@ def fetch_episodes(episode_dict, audio_dir, tscript_dir):
 
         # Check if transcript file exists
         transcript_files = glob.glob(os.path.join(tscript_dir, f"*{title}*"))
+        
+        # If no transcript exists, check if we need to download or re-download the audio
         if not transcript_files:
-            logger.info(f"Cannot find episode transcript: {filename}")
-            episodes_to_download.append({
-                'title': title,
-                'url': url,
-                'date': date,
-                'audio_filename': audio_filename,
-                'audio_path': audio_path,
-                'filename': filename,
-                'path': tscript_path,
-            })
+            if not verify_audio_file(audio_path, url):
+                if os.path.exists(audio_path):
+                    incomplete_downloads.append(f"{title} (incomplete)")
+                    # Remove incomplete file
+                    try:
+                        os.remove(audio_path)
+                        logger.info(f"Removed incomplete download: {audio_path}")
+                    except Exception as e:
+                        logger.error(f"Error removing incomplete file {audio_path}: {str(e)}")
+                
+                episodes_to_download.append({
+                    'title': title,
+                    'url': url,
+                    'date': date,
+                    'audio_filename': audio_filename,
+                    'audio_path': audio_path,
+                    'filename': filename,
+                    'path': tscript_path,
+                })
 
     if not episodes_to_download:
         logger.info("No episodes need to be downloaded.")
         return
 
     logger.info(f"Found {len(episodes_to_download)} episodes to download")
+    if incomplete_downloads:
+        logger.info("Including incomplete downloads that will be retried:")
+        for episode in incomplete_downloads:
+            logger.info(f" - {episode}")
+    
     for episode in episodes_to_download:
         logger.info(f" - {episode['title']}")
 
@@ -281,6 +329,9 @@ def fetch_episodes(episode_dict, audio_dir, tscript_dir):
         return
 
     # Download episodes with progress bar
+    successful_downloads = []
+    failed_downloads = []
+    
     for episode in tqdm(episodes_to_download, desc="Downloading episodes"):
         title = episode['title']
         url = episode['url']
@@ -307,11 +358,33 @@ def fetch_episodes(episode_dict, audio_dir, tscript_dir):
                     size = f.write(data)
                     pbar.update(size)
             
-            logger.info(f"Successfully downloaded {title}")
+            # Verify the downloaded file
+            if verify_audio_file(audio_path, url):
+                logger.info(f"Successfully downloaded {title}")
+                successful_downloads.append(title)
+            else:
+                logger.error(f"Download verification failed for {title}")
+                failed_downloads.append(title)
+                # Remove the failed download
+                try:
+                    os.remove(audio_path)
+                except Exception as e:
+                    logger.error(f"Error removing failed download {audio_path}: {str(e)}")
+                
         except Exception as e:
             logger.error(f"Error downloading {title}: {str(e)}")
+            failed_downloads.append(title)
             continue
 
+    # Summary of download results
+    logger.info("\nDownload Summary:")
+    logger.info(f"Successfully downloaded: {len(successful_downloads)} episodes")
+    if failed_downloads:
+        logger.info(f"Failed downloads ({len(failed_downloads)} episodes):")
+        for title in failed_downloads:
+            logger.info(f" - {title}")
+        logger.info("You can run the script again to retry failed downloads.")
+    
     logger.info("Finished fetching episodes.")
 
 # -----------------------------------------------------------------------------
@@ -359,6 +432,41 @@ def transcribe_with_server(audio_file, output_path, server_url, model="medium", 
         logger.error(f"Error during server transcription: {e}")
         return False
 
+def verify_transcript(transcript_path):
+    """Verify that a transcript file exists and is valid."""
+    if not os.path.exists(transcript_path):
+        return False
+        
+    try:
+        # Check if file is empty
+        if os.path.getsize(transcript_path) == 0:
+            logger.warning(f"Empty transcript file detected: {transcript_path}")
+            return False
+            
+        # Read the first few lines to verify format
+        with open(transcript_path, 'r', encoding='utf-8') as f:
+            first_lines = [next(f) for _ in range(4)]
+            
+        # Basic validation for SRT format
+        try:
+            # First line should be a number
+            int(first_lines[0].strip())
+            # Second line should contain time codes with arrow
+            if ' --> ' not in first_lines[1]:
+                return False
+            # Should have some content
+            if not any(line.strip() for line in first_lines[2:]):
+                return False
+        except (ValueError, IndexError):
+            logger.warning(f"Invalid transcript format detected: {transcript_path}")
+            return False
+            
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error verifying transcript {transcript_path}: {str(e)}")
+        return False
+
 def transcribe_episodes(wav_dir, tscript_dir, out_format, file_list, audio_dir):
     """Transcribe episodes using either local or server-based transcription."""
     from config import (
@@ -370,8 +478,45 @@ def transcribe_episodes(wav_dir, tscript_dir, out_format, file_list, audio_dir):
         TRANSCRIPT_TRANSLATE
     )
     
+    # First, verify existing transcripts and remove invalid ones
+    logger.info("Verifying existing transcripts...")
+    invalid_transcripts = []
+    for transcript_file in glob.glob(os.path.join(tscript_dir, f"*.{out_format}")):
+        if not verify_transcript(transcript_file):
+            invalid_transcripts.append(os.path.basename(transcript_file))
+            try:
+                os.remove(transcript_file)
+                logger.info(f"Removed invalid transcript: {transcript_file}")
+            except Exception as e:
+                logger.error(f"Error removing invalid transcript {transcript_file}: {str(e)}")
+    
+    if invalid_transcripts:
+        logger.info(f"Found {len(invalid_transcripts)} invalid transcripts that will be regenerated:")
+        for transcript in invalid_transcripts:
+            logger.info(f" - {transcript}")
+    
+    # Update file_list to include audio files for invalid transcripts
+    for invalid_transcript in invalid_transcripts:
+        base_name = os.path.splitext(invalid_transcript)[0]
+        audio_file = os.path.join(audio_dir, f"{base_name}.mp3")
+        if os.path.exists(audio_file) and audio_file not in file_list:
+            file_list.append(audio_file)
+    
+    if not file_list:
+        logger.info("No episodes need to be transcribed.")
+        return
+    
+    logger.info(f"Found {len(file_list)} episodes to transcribe")
+    for audio_file in file_list:
+        logger.info(f" - {os.path.basename(audio_file)}")
+    
+    confirmation = input("Press Enter to continue with transcription...")
+    
+    successful_transcripts = []
+    failed_transcripts = []
+    
     if TRANSCRIPT_SERVER_ENABLED:
-        print("Using remote transcription server")
+        logger.info("Using remote transcription server")
         for audio_file in tqdm(file_list, desc="Transcribing"):
             basename = os.path.basename(audio_file)
             name_without_ext = os.path.splitext(basename)[0]
@@ -387,14 +532,30 @@ def transcribe_episodes(wav_dir, tscript_dir, out_format, file_list, audio_dir):
                 TRANSCRIPT_TRANSLATE
             )
             
-            if not success:
-                print(f"Failed to transcribe {basename}")
-                continue
-            
-            print(f"Successfully transcribed {basename}")
+            if success and verify_transcript(output_path):
+                logger.info(f"Successfully transcribed {basename}")
+                successful_transcripts.append(basename)
+            else:
+                logger.error(f"Failed to transcribe {basename}")
+                failed_transcripts.append(basename)
+                # Remove failed transcript if it exists
+                try:
+                    if os.path.exists(output_path):
+                        os.remove(output_path)
+                except Exception as e:
+                    logger.error(f"Error removing failed transcript {output_path}: {str(e)}")
     else:
-        print("Using local transcription")
+        logger.info("Using local transcription")
         # ... existing local transcription code ...
+    
+    # Summary of transcription results
+    logger.info("\nTranscription Summary:")
+    logger.info(f"Successfully transcribed: {len(successful_transcripts)} episodes")
+    if failed_transcripts:
+        logger.info(f"Failed transcriptions ({len(failed_transcripts)} episodes):")
+        for basename in failed_transcripts:
+            logger.info(f" - {basename}")
+        logger.info("You can run the script again to retry failed transcriptions.")
 
 def create_recommendations_prompt(user_interest, db_episodes, semantic_segments):
     """
