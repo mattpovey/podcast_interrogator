@@ -18,6 +18,7 @@ import platform
 from datetime import datetime
 import subprocess
 import glob
+import feedparser
 
 # -----------------------------------------------------------------------------
 # Configure logging
@@ -201,7 +202,44 @@ def gen_filenames(feed):
 
     return episode_dict
 
+def parse_feed_urls(feed_urls_str):
+    """Parse comma-separated feed URLs into a list."""
+    if not feed_urls_str:
+        logger.error("No feed URLs provided")
+        return []
+    return [url.strip() for url in feed_urls_str.split(',') if url.strip()]
+
+def consolidate_feeds(feed_urls):
+    """Fetch and consolidate episodes from multiple RSS feeds."""
+    all_episodes = {}
+    
+    for feed_url in feed_urls:
+        try:
+            logger.info(f"Parsing feed: {feed_url}")
+            feed = feedparser.parse(feed_url)
+            episode_dict = gen_filenames(feed)
+            
+            # Merge episodes, avoiding duplicates based on title
+            for title, episode in episode_dict.items():
+                if title not in all_episodes:
+                    all_episodes[title] = episode
+                else:
+                    # If duplicate found, keep the one with the earlier date
+                    existing_date = all_episodes[title]['date']
+                    new_date = episode['date']
+                    if new_date < existing_date:
+                        all_episodes[title] = episode
+            
+            logger.info(f"Found {len(episode_dict)} episodes in feed: {feed_url}")
+        except Exception as e:
+            logger.error(f"Error parsing feed {feed_url}: {str(e)}")
+            continue
+    
+    logger.info(f"Total unique episodes found across all feeds: {len(all_episodes)}")
+    return all_episodes
+
 def fetch_episodes(episode_dict, audio_dir, tscript_dir):
+    """Fetch episodes that don't have transcripts yet."""
     episodes_to_download = []
 
     for episode in episode_dict:
@@ -217,9 +255,8 @@ def fetch_episodes(episode_dict, audio_dir, tscript_dir):
 
         # Check if transcript file exists
         transcript_files = glob.glob(os.path.join(tscript_dir, f"*{title}*"))
-        # print(f"Checking for transcript file: {title}")
         if not transcript_files:
-            print(f"Cannot find episode transcript: {filename}")
+            logger.info(f"Cannot find episode transcript: {filename}")
             episodes_to_download.append({
                 'title': title,
                 'url': url,
@@ -231,16 +268,16 @@ def fetch_episodes(episode_dict, audio_dir, tscript_dir):
             })
 
     if not episodes_to_download:
-        print("No episodes need to be downloaded.")
+        logger.info("No episodes need to be downloaded.")
         return
 
-    print("The following episodes will be downloaded:")
+    logger.info("The following episodes will be downloaded:")
     for episode in episodes_to_download:
-        print(f" - {episode['title']}")
+        logger.info(f" - {episode['title']}")
 
     confirmation = input("Do you want to proceed with the download? (yes/no): ")
     if confirmation.lower() != 'yes':
-        print("Download aborted.")
+        logger.info("Download aborted.")
         return
 
     for episode in episodes_to_download:
@@ -248,12 +285,18 @@ def fetch_episodes(episode_dict, audio_dir, tscript_dir):
         url = episode['url']
         audio_path = episode['audio_path']
 
-        print(f"Downloading {title}...")
-        response = requests.get(url)
-        with open(audio_path, 'wb') as f:
-            f.write(response.content)
+        logger.info(f"Downloading {title}...")
+        try:
+            response = requests.get(url)
+            response.raise_for_status()  # Raise an exception for bad status codes
+            with open(audio_path, 'wb') as f:
+                f.write(response.content)
+            logger.info(f"Successfully downloaded {title}")
+        except Exception as e:
+            logger.error(f"Error downloading {title}: {str(e)}")
+            continue
 
-    print("Finished fetching and transcribing episodes.")
+    logger.info("Finished fetching episodes.")
 
 # -----------------------------------------------------------------------------
 # Transcription functions

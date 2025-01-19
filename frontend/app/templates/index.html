@@ -6,7 +6,7 @@
 <div class="container">
     <div class="row mb-5">
         <div class="col-12 text-center">
-            <h1 class="display-4">The Rest Is History Podcast Search</h1>
+            <h1 class="display-4">{{ podcast_name }} Search</h1>
             <p class="lead">Choose your preferred way to search through podcast episodes</p>
             <div class="d-flex justify-content-center align-items-center">
                 Built by Matthew Povey and various AIs:
@@ -35,14 +35,14 @@
                     <p class="card-text">
                         Best for:
                         <ul>
-                            <li>Finding out just how sacral the podcast is</li>
+                            <li>Finding specific mentions or quotes</li>
                             <li>Finding the right episode to listen to</li>
                             <li>Jumping straight to the audio you've found</li>
                         </ul>
                         Features:
                         <ul>
                             <li>Exact phrase matching</li>
-                            <li>Gives a count of how often a word or phrase appears</li>
+                            <li>Word and phrase frequency counts</li>
                             <li>Fast and precise results</li>
                         </ul>
                     </p>
@@ -113,7 +113,7 @@
     <div class="row mb-5">
         <div class="col-12 text-center">
             <p class="text-center">
-                AI Search uses <a href="{{ provider_url }}">{{ provider_name }}</a>.
+                AI Search powered by <a href="{{ provider_url }}">{{ provider_name }}</a>.
             </p>
         </div>
     </div>

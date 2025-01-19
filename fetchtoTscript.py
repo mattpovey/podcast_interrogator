@@ -1,6 +1,6 @@
-# Script to fetch all episodes of a podcast from the RSS feed
+# Script to fetch all episodes of a podcast from multiple RSS feeds
 # and save them to a local directory. Each podcast episode is
-# saved as a given the same name as its title. All titles, 
+# saved with a name based on its title. All titles, 
 # descriptions, and URLs are saved to the postgres database.
 
 import feedparser
@@ -15,12 +15,13 @@ from libPodSemSearch import (
     setup_database,
     fetch_episodes,
     check_dir,
-    transcribe_episodes
+    transcribe_episodes,
+    parse_feed_urls,
+    consolidate_feeds,
 )
 
 # Import config from config.py
 from config import ( 
-    feed_url,
     pod_prefix,
     audio_dir,
     tscript_dir,
@@ -36,6 +37,7 @@ def validate_config():
         ('POSTGRES_DB', 'Database name'),
         ('POSTGRES_USER', 'Database user'),
         ('POSTGRES_PASSWORD', 'Database password'),
+        ('FEED_URLS', 'RSS feed URLs'),
     ]
     
     missing = []
@@ -49,8 +51,9 @@ def validate_config():
             print(f"- {item}")
         return False
     
-    if not feed_url or feed_url == 'your_podcast_rss_feed_url':
-        print("Error: Please configure the podcast RSS feed URL in config.py")
+    feed_urls = parse_feed_urls(os.getenv('FEED_URLS'))
+    if not feed_urls:
+        print("Error: No valid RSS feed URLs found in FEED_URLS")
         return False
     
     if not pod_prefix or pod_prefix == 'your_podcast_name':
@@ -60,7 +63,7 @@ def validate_config():
     return True
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Fetch and transcribe podcast episodes')
+    parser = argparse.ArgumentParser(description='Fetch and transcribe podcast episodes from multiple RSS feeds')
     parser.add_argument('--server', action='store_true',
                       help='Use remote transcription server instead of local transcription')
     parser.add_argument('--server-url', type=str,
@@ -106,25 +109,25 @@ def main():
         config.TRANSCRIPT_TRANSLATE = args.translate
     
     # Check that all directories exist
-    # First that we have a directory for the podcast
     check_dir(pod_prefix, count_files=0, create=1)
-    # Then the subdirectories
     check_dir(audio_dir, count_files=1, create=1)
     check_dir(wav_dir, count_files=0, create=1)
     check_dir(tscript_dir, count_files=1, create=1)
     
-    # First we grab the RSS feed and generate metadata
-    try:
-        rih_feed = feedparser.parse(feed_url)    # Parse RSS feed
-    except Exception as e:
-        print(f"Error parsing RSS feed: {str(e)}")
+    # Parse and consolidate episodes from all feeds
+    feed_urls = parse_feed_urls(os.getenv('FEED_URLS'))
+    print(f"Found {len(feed_urls)} RSS feeds to process")
+    
+    # Consolidate episodes from all feeds
+    episode_dict = consolidate_feeds(feed_urls)
+    if not episode_dict:
+        print("No episodes found in any of the feeds")
         exit(1)
     
-    episode_dict = gen_filenames(rih_feed)    # Generate a dictionary of episode metadata including filenames
-    print("Successfully obtained episode metadata from RSS feed")
+    print(f"Successfully obtained {len(episode_dict)} unique episodes from RSS feeds")
     
     # Setup the database schema if it doesn't exist
-    print(f'Setting up database schema...')
+    print('Setting up database schema...')
     setup_database()
     
     # Add the new episodes to the database and get a dataframe of all episodes
