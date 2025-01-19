@@ -271,7 +271,7 @@ def fetch_episodes(episode_dict, audio_dir, tscript_dir):
         logger.info("No episodes need to be downloaded.")
         return
 
-    logger.info("The following episodes will be downloaded:")
+    logger.info(f"Found {len(episodes_to_download)} episodes to download")
     for episode in episodes_to_download:
         logger.info(f" - {episode['title']}")
 
@@ -280,17 +280,33 @@ def fetch_episodes(episode_dict, audio_dir, tscript_dir):
         logger.info("Download aborted.")
         return
 
-    for episode in episodes_to_download:
+    # Download episodes with progress bar
+    for episode in tqdm(episodes_to_download, desc="Downloading episodes"):
         title = episode['title']
         url = episode['url']
         audio_path = episode['audio_path']
 
-        logger.info(f"Downloading {title}...")
         try:
-            response = requests.get(url)
-            response.raise_for_status()  # Raise an exception for bad status codes
-            with open(audio_path, 'wb') as f:
-                f.write(response.content)
+            # Stream download with progress
+            response = requests.get(url, stream=True)
+            response.raise_for_status()
+            
+            # Get total file size
+            total_size = int(response.headers.get('content-length', 0))
+            
+            # Open file and write in chunks with progress
+            with open(audio_path, 'wb') as f, tqdm(
+                desc=f"Downloading {title}",
+                total=total_size,
+                unit='iB',
+                unit_scale=True,
+                unit_divisor=1024,
+                leave=False
+            ) as pbar:
+                for data in response.iter_content(chunk_size=1024):
+                    size = f.write(data)
+                    pbar.update(size)
+            
             logger.info(f"Successfully downloaded {title}")
         except Exception as e:
             logger.error(f"Error downloading {title}: {str(e)}")
