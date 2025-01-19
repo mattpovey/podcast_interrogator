@@ -252,16 +252,18 @@ def fetch_episodes(episode_dict, audio_dir, tscript_dir):
         date = episode_dict[episode]['date']
         filename = episode_dict[episode]['filename']
 
-        # Check if the audio file already exists
+        # Check if transcript already exists
+        transcript_path = os.path.join(tscript_dir, filename)
+        if verify_transcript(transcript_path):
+            # If transcript exists, we can skip this episode
+            continue
+
+        # If we get here, we need this episode
         audio_filename = f"{date}_{title}.mp3"
         audio_path = os.path.join(audio_dir, audio_filename)
-        tscript_path = os.path.join(tscript_dir, filename)
-
-        # Check if transcript file exists
-        transcript_files = glob.glob(os.path.join(tscript_dir, f"*{title}*"))
         
-        # If no transcript exists and no audio file, add to download list
-        if not transcript_files and not verify_audio_file(audio_path, url):
+        # Only download if audio doesn't exist
+        if not verify_audio_file(audio_path, url):
             episodes_to_download.append({
                 'title': title,
                 'url': url,
@@ -269,7 +271,7 @@ def fetch_episodes(episode_dict, audio_dir, tscript_dir):
                 'audio_filename': audio_filename,
                 'audio_path': audio_path,
                 'filename': filename,
-                'path': tscript_path,
+                'path': transcript_path,
             })
 
     if not episodes_to_download:
@@ -339,6 +341,18 @@ def fetch_episodes(episode_dict, audio_dir, tscript_dir):
         logger.info("You can run the script again to retry failed downloads.")
     
     logger.info("Finished fetching episodes.")
+
+def cleanup_audio_files(audio_path, wav_path=None):
+    """Clean up audio files after successful transcription."""
+    try:
+        if os.path.exists(audio_path):
+            os.remove(audio_path)
+            logger.info(f"Cleaned up audio file: {audio_path}")
+        if wav_path and os.path.exists(wav_path):
+            os.remove(wav_path)
+            logger.info(f"Cleaned up WAV file: {wav_path}")
+    except Exception as e:
+        logger.error(f"Error cleaning up audio files: {str(e)}")
 
 # -----------------------------------------------------------------------------
 # Transcription functions
@@ -411,7 +425,7 @@ def transcribe_episodes(wav_dir, tscript_dir, out_format, file_list, audio_dir):
         basename = os.path.splitext(audio_file)[0]
         transcript_path = os.path.join(tscript_dir, f"{basename}.{out_format}")
         
-        # Add to transcription list if transcript doesn't exist or is empty
+        # Only transcribe if transcript doesn't exist or is empty
         if not verify_transcript(transcript_path):
             audio_path = os.path.join(audio_dir, audio_file)
             files_to_transcribe.append(audio_path)
@@ -435,6 +449,7 @@ def transcribe_episodes(wav_dir, tscript_dir, out_format, file_list, audio_dir):
             basename = os.path.basename(audio_file)
             name_without_ext = os.path.splitext(basename)[0]
             output_path = os.path.join(tscript_dir, f"{name_without_ext}.{out_format}")
+            wav_path = os.path.join(wav_dir, f"{name_without_ext}.wav")
             
             success = transcribe_with_server(
                 audio_file,
@@ -449,6 +464,8 @@ def transcribe_episodes(wav_dir, tscript_dir, out_format, file_list, audio_dir):
             if success and verify_transcript(output_path):
                 logger.info(f"Successfully transcribed {basename}")
                 successful_transcripts.append(basename)
+                # Clean up audio files after successful transcription
+                cleanup_audio_files(audio_file, wav_path)
             else:
                 logger.error(f"Failed to transcribe {basename}")
                 failed_transcripts.append(basename)
